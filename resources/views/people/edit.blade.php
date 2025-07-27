@@ -1,0 +1,186 @@
+@extends('layouts.app')
+
+@section('title', 'ویرایش فرد')
+
+@section('content')
+    <div class="container my-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">ویرایش فرد: {{ $person->name }}</h5>
+            </div>
+            <div class="card-body">
+                @if ($errors->any())
+                    <div class="alert alert-danger">
+                        <ul>
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+                @if (session('error'))
+                    <div class="alert alert-danger">{{ session('error') }}</div>
+                @endif
+
+                <form action="{{ route('people.update', $person->id) }}" method="POST">
+                    @csrf
+                    @method('POST')
+                    <div class="mb-3">
+                        <label for="name" class="form-label">نام</label>
+                        <input type="text" class="form-control" id="name" name="name" value="{{ old('name', $person->name) }}" required>
+                        @error('name')
+                            <div class="text-danger">{{ $message }}</div>
+                        @enderror
+                    </div>
+                    <div class="mb-3">
+                        <label for="gender" class="form-label">جنسیت</label>
+                        <select class="form-select" id="gender" name="gender" required>
+                            <option value="male" {{ old('gender', $person->gender) == 'male' ? 'selected' : '' }}>مرد</option>
+                            <option value="female" {{ old('gender', $person->gender) == 'female' ? 'selected' : '' }}>زن</option>
+                        </select>
+                        @error('gender')
+                            <div class="text-danger">{{ $message }}</div>
+                        @enderror
+                    </div>
+                    <div class="mb-3">
+                        <label for="city_of_birth_input" class="form-label">شهر محل تولد</label>
+                        <input type="text" id="city_of_birth_input" class="form-control" placeholder="جستجوی شهر..." value="{{ old('city_of_birth_input', $person->cityOfBirth ? $person->cityOfBirth->name . ' (' . ($person->cityOfBirth->country->name ?? '-') . ')' : '') }}" autocomplete="off">
+                        <input type="hidden" name="city_of_birth" id="city_of_birth" value="{{ old('city_of_birth', $person->city_of_birth) }}">
+                        <div id="city_of_birth_suggestions" class="dropdown-menu w-100"></div>
+                        @error('city_of_birth')
+                            <div class="text-danger">{{ $message }}</div>
+                        @enderror
+                    </div>
+                    <div class="mb-3">
+                        <label for="birthday" class="form-label">تاریخ تولد</label>
+                        <input type="date" class="form-control" id="birthday" name="birthday" value="{{ old('birthday', $person->birthday) }}">
+                        @error('birthday')
+                            <div class="text-danger">{{ $message }}</div>
+                        @enderror
+                    </div>
+                    <div class="mb-3">
+                        <label for="city_of_life_input" class="form-label">شهر محل زندگی</label>
+                        <input type="text" id="city_of_life_input" class="form-control" placeholder="جستجوی شهر..." value="{{ old('city_of_life_input', $person->cityOfLife ? $person->cityOfLife->name . ' (' . ($person->cityOfLife->country->name ?? '-') . ')' : '') }}" autocomplete="off">
+                        <input type="hidden" name="city_of_life" id="city_of_life" value="{{ old('city_of_life', $person->city_of_life) }}">
+                        <div id="city_of_life_suggestions" class="dropdown-menu w-100"></div>
+                        @error('city_of_life')
+                            <div class="text-danger">{{ $message }}</div>
+                        @enderror
+                    </div>
+                    <div class="mb-3">
+                        <label for="occupation_id" class="form-label">شغل</label>
+                        <select class="form-select" id="occupation_id" name="occupation_id">
+                            <option value="">انتخاب شغل</option>
+                            @foreach ($occupations as $occupation)
+                                <option value="{{ $occupation->id }}" {{ old('occupation_id', $person->occupation_id) == $occupation->id ? 'selected' : '' }}>{{ $occupation->name }}</option>
+                            @endforeach
+                        </select>
+                        <input type="text" class="form-control mt-2" id="new_occupation" name="new_occupation" value="{{ old('new_occupation') }}" placeholder="شغل جدید (اختیاری)">
+                        @error('occupation_id')
+                            <div class="text-danger">{{ $message }}</div>
+                        @enderror
+                        @error('new_occupation')
+                            <div class="text-danger">{{ $message }}</div>
+                        @enderror
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">توضیحات</label>
+                        <textarea class="form-control" id="description" name="description">{{ old('description', $person->description) }}</textarea>
+                        @error('description')
+                            <div class="text-danger">{{ $message }}</div>
+                        @enderror
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="is_deceased" name="is_deceased"{{ old('is_deceased', $person->city_of_die || $person->date_of_die) ? 'checked' : '' }}>
+                        <label class="form-check-label" for="is_deceased">فوت شده است</label>
+                    </div>
+                    <div id="deceased-fields" class="mt-3" style="display: {{ old('is_deceased', $person->city_of_die || $person->date_of_die) ? 'block' : 'none' }};">
+                        <div class="mb-3">
+                            <label for="city_of_die_input" class="form-label">شهر محل فوت</label>
+                            <input type="text" id="city_of_die_input" class="form-control" placeholder="جستجوی شهر..." value="{{ old('city_of_die_input', $person->cityOfDie ? $person->cityOfDie->name . ' (' . ($person->cityOfDie->country->name ?? '-') . ')' : '') }}" autocomplete="off">
+                            <input type="hidden" name="city_of_die" id="city_of_die" value="{{ old('city_of_die', $person->city_of_die) }}">
+                            <div id="city_of_die_suggestions" class="dropdown-menu w-100"></div>
+                            @error('city_of_die')
+                                <div class="text-danger">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        <div class="mb-3">
+                            <label for="date_of_die" class="form-label">تاریخ فوت</label>
+                            <input type="date" class="form-control" id="date_of_die" name="date_of_die" value="{{ old('date_of_die', $person->date_of_die) }}">
+                            @error('date_of_die')
+                                <div class="text-danger">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">به‌روزرسانی</button>
+                    <a href="{{ route('people.family_tree') }}" class="btn btn-secondary">بازگشت</a>
+                </form>
+            </div>
+        </div>
+    </div>
+
+@section('scripts')
+    <script>
+        function setupCityAutocomplete(inputId, hiddenInputId, suggestionsId) {
+            const input = document.getElementById(inputId);
+            const hiddenInput = document.getElementById(hiddenInputId);
+            const suggestions = document.getElementById(suggestionsId);
+
+            input.addEventListener('input', async function () {
+                const query = this.value;
+                if (query.length < 2) {
+                    suggestions.innerHTML = '';
+                    suggestions.classList.remove('show');
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`{{ route('api.cities.search') }}?q=${encodeURIComponent(query)}`);
+                    if (!response.ok) {
+                        console.error('HTTP Error:', response.status, response.statusText);
+                        suggestions.innerHTML = '<div class="dropdown-item text-danger">خطا در دریافت داده‌ها: ' + response.status + '</div>';
+                        suggestions.classList.add('show');
+                        return;
+                    }
+                    const cities = await response.json();
+                    suggestions.innerHTML = '';
+                    if (cities.length === 0) {
+                        suggestions.innerHTML = '<div class="dropdown-item">هیچ شهری یافت نشد</div>';
+                    } else {
+                        cities.forEach(city => {
+                            const item = document.createElement('div');
+                            item.classList.add('dropdown-item');
+                            item.textContent = `${city.name} (${city.country})`;
+                            item.addEventListener('click', () => {
+                                input.value = `${city.name} (${city.country})`;
+                                hiddenInput.value = city.id;
+                                suggestions.innerHTML = '';
+                                suggestions.classList.remove('show');
+                            });
+                            suggestions.appendChild(item);
+                        });
+                    }
+                    suggestions.classList.add('show');
+                } catch (error) {
+                    console.error('Error fetching cities:', error);
+                    suggestions.innerHTML = '<div class="dropdown-item text-danger">خطایی رخ داد: ' + error.message + '</div>';
+                    suggestions.classList.add('show');
+                }
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!input.contains(e.target) && !suggestions.contains(e.target)) {
+                    suggestions.classList.remove('show');
+                }
+            });
+        }
+
+        setupCityAutocomplete('city_of_birth_input', 'city_of_birth', 'city_of_birth_suggestions');
+        setupCityAutocomplete('city_of_life_input', 'city_of_life', 'city_of_life_suggestions');
+        setupCityAutocomplete('city_of_die_input', 'city_of_die', 'city_of_die_suggestions');
+
+        document.getElementById('is_deceased').addEventListener('change', function() {
+            document.getElementById('deceased-fields').style.display = this.checked ? 'block' : 'none';
+        });
+    </script>
+@endsection
